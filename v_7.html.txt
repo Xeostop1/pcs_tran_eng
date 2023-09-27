@@ -1,0 +1,323 @@
+<!--#include virtual=/inc/vbutil.inc-->
+<%
+sql="GWU_GLOBAL_LANGUAGE "
+set languageset=getsp_by_conn(getconnection(),sql)
+	
+%>
+<style>
+    
+
+    #map {
+        display: none;
+    }
+
+    li {
+        cursor: pointer;
+        list-style: none;
+    }
+
+/* 모바일 화면 너비가 600px 이하 */
+   @media only screen and (max-width: 600px) {
+
+       #wrap {
+        margin:0 auto;
+        margin-top: -20px;
+        overflow-y: scroll; 
+        height: 300px; 
+       }
+
+       #add_input {
+        position: absolute;
+        top: 8px;
+        left: 11px;
+        font-size: 3vw !important; 
+        width: 85%;
+       }
+       
+       .search_btn {
+        position: absolute;
+        top: 5px;
+        left: 322px;
+        width: 22px;
+        height: 22px;
+       }
+
+       .add_li { 
+        font-size: 3.5vw;
+        padding-top: 4px;
+       }
+
+       #results {
+        overflow-y: scroll; 
+        height: 300px; 
+        }
+
+        .hr{
+            margin-top: -7px;
+        }
+
+        .add_li:first-child {
+            margin-top: 3px;
+        }
+   }
+
+   /* 태블릿 601px ~ 1024px */
+   @media only screen and (min-width : 601px) and (max-width :1024px) {  
+  
+       #add_input {
+           font-size: 2vw;
+           margin-top:-30px; 
+           margin-left :15px; 
+           width: 90%;
+       }
+       
+       .search_btn {
+            margin-top:-30px;
+            width: 30px;
+            height: 30px;
+       }
+
+      .add_li { 
+        font-size: 1.3em; 
+        padding: 5px;
+      }    
+       .add_li:first-child {
+        margin-top: -9px;
+    }
+    
+   } 
+
+   
+   /* 모니터 화면 너비가 1025 이상 */   
+   @media only screen and (min-width :1025 px){
+     #add_input{
+        font-size: 2vw;  
+         margin-top :-45 px ;
+         margin-left :20 px ; 
+         width: 90%; 
+     } 
+      .add_li:first-child {
+        margin-top: -9px;
+    }
+}
+
+    #add_input {
+        border: 0;
+        border: none;
+        outline: none;
+        background: none;
+        cursor: text;
+        /* font-size: 2vw !important; */
+        /* 상단위치 화면에 따라 변경 必 */
+        /* margin-top: -45px;
+        margin-left: 20px;
+        /* !important; 정확히 왜 안되는지 모르겠네*/
+    }
+
+    #add_input::placeholder {
+        font-size: 1.5em;
+        color: #c2c2c2;
+        padding-right: 40px;
+    }
+
+    .search_btn {
+        display: inline-block;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3C!--! Font Awesome Pro 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --%3E%3Cpath d='M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z'/%3E%3C/svg%3E");
+        background-size: cover;
+        /* width: 30px;
+        height: 30px; */
+        /* margin-top: -45px; */
+    }
+    .add_li {
+        display: block;
+        text-align: left;
+        /* font-size: 1.5em;
+        padding: 5px 5px 5px 30px; */
+        vertical-align: middle;
+        /* margin-right: 10px; */
+    }
+
+    .hr{
+        width:100%;
+        border-bottom:1px solid #ccc;
+    }
+</style>
+</head>
+
+<body>
+
+    <% cName=request("cName") '영문국가명
+    cCode=request("cCode")	' 국가코드 lCode=request("lCode") '언어코드
+    lCode=request("lCode")	' 국가코드 lCode=request("lCode") '언어코드
+    if cCode="HK" then initialZipCode="070"
+    
+    ' response.write "lCode: " &lCode&"<br>"
+    ' response.write "cCode: "&cCode&"<br>"
+    ' response.write "cName: "&cName&"<br>"
+
+
+
+        ' %>
+        <div id="wrap">
+            <br/>
+            <input id="add_input" type="text" class="presubmit" submit="mySubmit" placeholder="<%=getLang("주소검색","345")%>" >
+            <a href="javascript:void(0);" class="search_btn submitonenter"></a>
+            <div class="hr"></div>
+            <input type="hidden" id="hidden_country" />
+            <input type="hidden" id="lCode" value=<%=lCode%>/>
+            <input type="hidden" id="cName" value=<%=cName%>/>
+            <input type="hidden" id="cCode" value=<%=cCode%>/>
+            <input value="<%=initialZipCode%>" type="hidden" id="zipcode"/>
+            <ul id="results"></ul>
+            <div id="map"></div>
+            
+        </div>
+        <script type="text/javascript">
+            //포커스 
+            $(document).ready(function () {
+                $("#add_input").focus();
+                var loadMapsAPI = true;
+                //키변경
+                if (loadMapsAPI) {
+                    var script = document.createElement('script');
+                    script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyC9j1_VWxunFKcuEBNClftVAk3bTgQD39A&libraries=places&callback=initMap";
+                    script.async = true;
+                    script.defer = true;
+                    document.head.appendChild(script);
+                }
+            });
+
+             var lCode = "<%=lCode%>";              
+            $("#add_input").keypress(function (event) {
+                if (event.which == 13) {
+                    event.preventDefault();
+                    mySubmit(event);
+                }  
+            })
+
+            //*************************************************
+            //map, infowindow, address 전역
+            //*************************************************
+
+            var map;
+            var infowindow;
+            var placesService;
+            var address;
+            var addInput = $("#add_input");
+            var flag = false;
+            var zh_cn="zh-CN"
+
+            //****맵 초기화 
+            function initMap() {
+                var defalut = new google.maps.LatLng(0, 0);
+                infowindow = new google.maps.InfoWindow();
+                map = new google.maps.Map(document.getElementById("map"), {
+                    center: defalut,
+                    zoom: 15,
+                });
+                placesService = new google.maps.places.PlacesService(map)
+            }
+
+            var search_btn = $(".search_btn");
+            search_btn.on("click", function (e) {
+                mySubmit(e)
+            });
+
+            //*****서치이벤트
+            function mySubmit(e) {
+                e.preventDefault()
+                var lCode = $("#lCode").val();
+                var zipcodeInput = $("#zipcode");
+                address = `${addInput.val()} ${$("#hidden_country").val()}`;
+                const autocompl = new google.maps.places.AutocompleteService();
+
+                //*****자동주소 호출(중국어 주소 위치 변경)
+                autocompl.getPlacePredictions(
+                    { input: address, language: lCode },
+                    function (predictions, status) {
+                        console.log(predictions, "1");
+                        if (status != google.maps.places.PlacesServiceStatus.OK) {
+                            console.error("Error_code 확인: " + status);
+                            //*****상세주소 X, 사용자 직접 수정
+                            if (status == google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                                lCode = lCode.replace("/", "");
+                                if (lCode===zh_cn){  
+                                    alert("확인")
+                                    $("#recv_addr1").val(addInput.val());
+                                }
+                                $("#recv_zip").focus()
+                                $("#div_zipwrap").slideToggle();
+                            }
+                            else alert(status);
+                            return;
+                        }           
+
+                        //*****주소 리스트 생성
+                        $("#results").html("");
+                        predictions.forEach(function (predi) {
+                            var li = $('<li class="add_li"></li>');
+                            placesService.getDetails(
+                                { placeId: predi.place_id, language: "en" },
+                                function (place, status) {
+                                    var postal_code = "";
+                                    for (let i = 0; i < place.address_components.length; i++) {
+                                        if (place.address_components[i].types.includes("postal_code")) {
+                                            postal_code = place.address_components[i].long_name;
+                                            break;
+                                        }
+                                    }
+                                    //*****우편번호 없거나 정식주소 없을때
+                                    if (!postal_code || !place.formatted_address) {
+                                        li.text("우편번호 정보 없음 - " + predi.description);
+                                        $("#results").append(li);
+
+
+                                        
+                                        if (!flag) {
+                                            alert("우편번호를 찾을 수 없습니다. 상세한 주소한 주소와 우편번호를 입력해주세요.");
+                                            flag = true;
+                                        }
+                                    } else {
+                                        li.text(postal_code + ' ' + predi.description);
+                                        $("#results").append(li);
+                                    }
+                                    //******리스트 클릭
+                                    li.on("click", function () {
+                                        var en_address = place.formatted_address;
+                                        addInput.val(place.formatted_address).focus();
+                                        if (!postal_code || !place.formatted_address) {
+                                            $("#div_zipwrap").slideToggle();
+                                            $("#recv_addr2").val(addInput.val());
+                                              if (lCode===zh_cn){  
+                                                 $("#recv_addr1").val(addInput.val());
+                                             }
+                                            $("#recv_zip").focus();
+                                        } else {
+                                            $("#recv_zip").val(postal_code);
+                                            $("#recv_addr2").val(en_address);
+                                              if (lCode===zh_cn){  
+                                                $("#recv_addr1").val(en_address); 
+                                            }
+                                            $("#div_zipwrap").slideToggle();
+                                        }
+                                    });
+                                });
+                        });
+                    })
+            }
+            window.initMap = initMap;
+        </script>
+        <!-- hana key
+        <script async
+             src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlp3ZFcVhVXXorS_kpaaQ3vXk4hm-_Qa0&libraries=places&callback=initMap">
+        </script>-->
+
+</body>
+
+</html>
+<%
+languageset.Close
+set languageset=nothing
+	
+	
+%>
