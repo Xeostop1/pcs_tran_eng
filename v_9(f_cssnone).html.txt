@@ -15,7 +15,7 @@ set languageset=getsp_by_conn(getconnection(),sql)
 
     li {
         cursor: pointer;
-        list-style: none;
+        /* list-style: none; */
     }
 
 /* 모바일 화면 너비가 600px 이하 */
@@ -26,7 +26,6 @@ set languageset=getsp_by_conn(getconnection(),sql)
         overflow-y: scroll; 
         height: 300px; 
        }
-
        #add_input {
         border: 0;
         border: none;
@@ -55,6 +54,7 @@ set languageset=getsp_by_conn(getconnection(),sql)
         font-size: 3.5vw;
         padding-top: 4px;
        }
+      
 
        #results {
         overflow-y: scroll; 
@@ -74,6 +74,9 @@ set languageset=getsp_by_conn(getconnection(),sql)
         width:100%;
         border-bottom:1px solid #ccc;
     }  
+
+
+
    }
 
    /* 태블릿 601px ~ 1024px */
@@ -105,6 +108,7 @@ set languageset=getsp_by_conn(getconnection(),sql)
       .add_li { 
         font-size: 2em; 
         padding: 5px;
+        border-bottom:1px solid #ccc;
       }    
        .add_li:first-child {
         margin-top: 6px;
@@ -129,13 +133,11 @@ set languageset=getsp_by_conn(getconnection(),sql)
         background: none;
         cursor: text;
         position: absolute;
-        top: 17px;
-        left: 11px;
+        top: 218px;
+        /* border-bottom:1px solid #ccc; */
+        /* left: 11px;  */
         /* font-size: 2vw !important; */
-        /* 상단위치 화면에 따라 변경 必 */
-        /* margin-top: -45px;
-        margin-left: 20px;
-        /* !important; 정확히 왜 안되는지 모르겠네*/
+    
     }
 
     #add_input::placeholder {
@@ -151,78 +153,49 @@ set languageset=getsp_by_conn(getconnection(),sql)
         width: 30px;
         height: 30px;
         position: absolute;
-        top: 14px;
-        right: 26px;
+        top: 213px;
+        right: 15px;
        
     }
     .add_li {
-        display: block;
         text-align: left;
-        font-size: 1.5vw;
-        padding: 5px 5px 5px 30px;
+        font-size: 1.2vw;
+        margin: 5px 5px 5px 30px;
+        padding-bottom:3px;
         vertical-align: middle;
         /* margin-right: 10px; */
+        border-bottom:1px solid #ccc;
     }
     .add_li:first-child {
         margin-top: 5px;
     }
 
-    .hr{
-        margin-top:-9px;
-        width:100%;
-        border-bottom:1px solid #ccc;
+    hr{
+        margin-top:201px;
+       
     }    
+    #map{
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        height:200px;
+
+    }
+    #results{
+        position: absolute;
+        /* top: 250px; */
+        left: 0px;
+        height:200px;
+        overflow-x:hidden;
+        overflow-y: auto;
+        list-style-type: disc !important;
+    }
+     .add_li:hover{
+            border:1px solid #ccc;
+            padding-left: 1px;
+       }
 }
-    /* #add_input {
-        width:90%;
-        border: 0;
-        border: none;
-        outline: none;
-        background: none;
-        cursor: text;
-        position: absolute;
-        top: 17px;
-        left: 11px;
-        /* font-size: 2vw !important; */
-        /* 상단위치 화면에 따라 변경 必 */
-        /* margin-top: -45px;
-        margin-left: 20px;
-        /* !important; 정확히 왜 안되는지 모르겠네
-    }
-
-    #add_input::placeholder {
-        font-size: 1.5em;
-        color: #c2c2c2;
-        padding-right: 40px;
-    }
-
-    .search_btn {
-        display: inline-block;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3C!--! Font Awesome Pro 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --%3E%3Cpath d='M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z'/%3E%3C/svg%3E");
-        background-size: cover;
-        width: 30px;
-        height: 30px;
-        position: absolute;
-        top: 14px;
-        right: 26px;
-    }
-    .add_li {
-        display: block;
-        text-align: left;
-        font-size: 1.5vw;
-        padding: 5px 5px 5px 30px;
-        vertical-align: middle;
-        /* margin-right: 10px; 
-    }
-    .add_li:first-child {
-        margin-top: 5px;
-    }
-
-    .hr{
-        margin-top:-9px;
-        width:100%;
-        border-bottom:1px solid #ccc;
-    } */
+    
 </style>
 </head>
 
@@ -240,11 +213,12 @@ set languageset=getsp_by_conn(getconnection(),sql)
 
         ' %>
         <div id="wrap">
-            <div id="map"></div>  
-            <br/>
-            <input id="add_input" type="text" class="presubmit" submit="mySubmit" placeholder="<%=getLang("주소검색","345")%>" >
-            <a href="javascript:void(0);" class="search_btn submitonenter"></a>
-            <div class="hr"></div>
+            
+            <div id="map"></div> 
+            
+            <a href="javascript:void(0);" class="search_btn submitonenter"></a>    
+            <input id="add_input" type="text" class="presubmit" submit="mySubmit" placeholder="<%=getLang("주소검색","34")%>" >
+            <hr>
             <input type="hidden" id="hidden_country" />
             <input type="hidden" id="lCode" value=<%=lCode%>/>
             <input type="hidden" id="cName" value=<%=cName%>/>
@@ -253,6 +227,138 @@ set languageset=getsp_by_conn(getconnection(),sql)
             <ul id="results"></ul>
         </div>
         <script type="text/javascript">
+            function adjustStyle(width) {
+                width=parseInt(width)
+                //모니터
+                if(width>=1025){
+                     $("#div_zipwrap").css({
+                        "width":"500px",
+                        "position":"absolute",
+                        "top":"155px",
+                        "left": "158px"
+                    });
+                     $("#tr_zipwrap>td .a_close").css({
+                        "right": "2px",
+                        "top": "0px",
+                        "opacity":"0.4"
+                    });
+                }
+                // 태블렛
+                else if (width >= 601 && width <= 1024) {
+                    $("#div_zipwrap").css({
+                        "width":"500px",
+                        "position":"absolute",
+                        "top":"-6px",
+                        "left": "211px",
+                        //"background":"red"
+                    });
+                     $("#tr_zipwrap>td .a_close").css({
+                        "right": "2px",
+                        "top": "0px",
+                        "opacity":"0.4"
+                    });
+                       $("#add_input").css({
+                            "width":"90%",
+                            "border": "none",
+                            "outline": "none",
+                            "background": "none",
+                            "cursor": "text",
+                            "position": "absolute",
+                            "top": "218px",
+                       })
+                    $("hr").css({
+                        "margin-top":"201px"
+                    })
+
+                    $("#map").css({
+                        "position": "absolute",
+                        "top": "0px",
+                        "left": "0px",
+                        "height":"200px"
+                    });
+
+                    $("#results").css({
+                        "overflowY": "scroll",
+                        "height":"200px",
+                        "position": "absolute",
+                        "top":"250px",
+                        "left": "0px",
+                        "overflowX": "hidden",
+                        "overflowY": "auto"
+                });
+                $(".add_li").css({
+                        "fontSize": "1.2vw",
+                        "margin": "5px 5px 5px 30px",
+                        "paddingBottom":"3px",
+                        "verticalAlign":"middle",
+                        "background":"red",
+                        "border": "1px solid #ccc"
+                    })
+                $(".search_btn").css({
+                    "position":   "absolute",
+                    "top":   "213px",
+                    "right":   "15px"
+                })
+
+
+
+                }
+                //스마혼
+                // else if (width <= 600) {
+                //        $("#div_zipwrap").css({
+                //         "width":"270px",
+                //         "height":"auto",
+                //         "position":"absolute",
+                //         "top":"-6px",
+                //         "left": "95px",
+                //         "background":"blue"
+                //     });
+                //      $("#tr_zipwrap>td .a_close").css({
+                //         "right": "2px",
+                //         "top": "0px",
+                //         "opacity":"0.4"
+                //     });
+                //     $("#map").css({
+                //         "position": "absolute",
+                //         "top": "0px",
+                //         "left": "0px",
+                //         "height":"100px"
+                //     });
+                //     $(".add_li").css({
+                //         "textAlign": "left",
+                //         "fontSize": "1.4vw",
+                //         "margin": "5px 5px 5px 30px",
+                //         "paddingBottom":"3px",
+                //         "verticalAlign":  "middle",
+                //         "borderBottom":  "1px solid #ccc"
+                //     })
+
+                // }
+            }
+
+            $(function() {   
+                adjustStyle($(this).width());
+                $(window).resize(function() {  
+                    adjustStyle($(this).width());
+                });
+            });
+
+
+            // $("#div_zipwrap").css({
+            //     // "background-color": "red",
+            //     "width":"500px",
+            //     "position":"absolute",
+            //     "top":"154px",
+            //     "left": "159px"
+            // })
+
+            // $("#tr_zipwrap>td .a_close").css({
+            //     "right": "2px",
+            //     "top": "0px",
+            //     "opacity":"0.4"
+            // })
+
+
             //포커스 
             $(document).ready(function () {
                 $("#add_input").focus();
@@ -265,8 +371,6 @@ set languageset=getsp_by_conn(getconnection(),sql)
                     script.defer = true;
                     document.head.appendChild(script);
                 }
-
-                
             });
 
              var lCode = "<%=lCode%>";              
@@ -311,6 +415,9 @@ set languageset=getsp_by_conn(getconnection(),sql)
                 map = new google.maps.Map(document.getElementById("map"), {
                     center: defaultLatLng,
                     zoom: 6,
+                    streetViewControl: false,
+                    mapTypeControl: false,
+                    fullscreenControl:false
                 });  
                 placesService = new google.maps.places.PlacesService(map);
                 var request = {
@@ -440,4 +547,3 @@ set languageset=nothing
 	
 	
 %>
-
