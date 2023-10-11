@@ -10,16 +10,55 @@ set languageset=getsp_by_conn(getconnection(),sql)
 		overflow-x: hidden;
 		padding-bottom:10px;
 	}
+    /* 주소검색창 */
+    #add_input{
+        width: calc(100% - 70px);
+        border:none;
+        text-indent:32px;
+        height: 44px; 
+        z-index:49;
+        float:center; 
+        background-color:#f1f1f1;
+        border-radius:50px; 
+        border:1px solid #ccc; 
+        margin-left: -43px;
+        margin-top: -8px;
+    }
+    #add_input::placeholder {
+        font-size:1.5em;
+    }
+    #add_input:focus {outline: none;}
+    .material-symbols-outlined{
+        margin-left:63px;
+        z-index:50;
+    }
+    /* Tip */
+    div.tip{
+		padding:20px;
+        text-align:center; 
+        font-size:1.2em; 
+        color:#888
+	}
+    /* map */
+
+    #map{
+        width:calc(100% - 50px);
+        height:300px;
+        display:block;
+        margin:0 auto; 
+        margin-left: 27px;
+    }
+    /* 결과 list */
+    #resultContainer{
+		display: none;
+		padding:20px 20px 30px 20px;
+        font-weight: 500;
+	}
 	.add_li{
 		width:100%;
         display: table;
+        cursor: pointer;
     }
-
-	.add_li:not(:last-child) {
-		border-bottom:1px dotted #dddddd;
-    }
-    #add_input{width: calc(100% - 70px);border:none;}
-    #add_input:focus {outline: none;}
     .add_li p,
     .add_li span,
         .add_li a{
@@ -27,16 +66,17 @@ set languageset=getsp_by_conn(getconnection(),sql)
         vertical-align: middle;
         padding:5px;
     }
+    .add_li span{
+        padding: 5px 5px 5px 0px;
+    }
     .add_li span{width: calc(100% - 150px);}
     .add_li p{width: 80px;padding-left:10px;color:#ff6600;}
     .add_li a{width: 50px;}
-	div.tip{
-		padding:20px;
-	}
-	#resultContainer{
-		display: none;
-		padding:20px 20px 30px 20px;
-	}
+
+	.add_li:not(:last-child) {
+		border-bottom:1px dotted #dddddd;
+    }
+   
 	@media ( max-width:1000px ) {
 		#div_zipwrap{
 			max-height: 50vh;
@@ -44,57 +84,68 @@ set languageset=getsp_by_conn(getconnection(),sql)
 		}
 		#tr_zipwrap td{position: inherit;}	
 	}
-    #add_input::placeholder {
-        font-size:1.5em;
-    }
+
+   
 </style>
 </head>
 
 <body>
 
-    <% cName=request("cName") '영문국가명
+    <% 
+    cName=request("cName") '영문국가명
     cCode=request("cCode")	' 국가코드 
     lCode=request("lCode")	' 언어코드 
+
     if cCode="HK" then initialZipCode="070"
-    
     ' response.write "lCode: " &lCode&"<br>"
-     response.write "cCode: "&cCode&"<br>"
+    ' response.write "cCode: "&cCode&"<br>"
     ' response.write "cName: "&cName&"<br>"
 
 
         ' %>
         <div id="wrap" >
-            <div style="float:left;width:100%;text-align:center;border-bottom:1px solid #000000;padding:0;">
-	            <input id="add_input" type="text" class="presubmit" submit="mySubmit" placeholder="<%=getLang("=국가코드 왜 안들어가죠?? cCode","80")%>" >
-	            <div style="width:50px;float:right;">
-		            <a href="javascript:void(0);" onclick="mySubmit();" class="material-symbols-outlined w600">search</a>
+            <div style="float:left;width:100%;text-align:center; padding:0;">
+	            <input id="add_input" type="text" class="presubmit" submit="mySubmit" placeholder="<%=getLang("주소검색","85")%>" >
+	            <div style="width:50px;float:left; z-index:50;">
+		            <a href="javascript:void(0);" onclick="mySubmit();" class="material-symbols-outlined w500">search</a>
 	            </div>
             </div>
-            
             <br>
-
             <input type="hidden" id="hidden_country" />
             <input type="hidden" id="lCode" value=<%=lCode%>/>
             <input type="hidden" id="cName" value=<%=cName%>/>
             <input type="hidden" id="cCode" value=<%=cCode%>/>
+            <input type="hidden" id="noSearch" value="<%=getLang("검색X","120")%>"/>
+            <input type="hidden" id="nopostCode" value="<%=getLang("우편번호X","347")%>"/>
             <input value="<%=initialZipCode%>" type="hidden" id="zipcode"/>
             <br>
-            <div class="tip" style="text-align:center; margin-top:-10px; font-size:1.2em; color:#888">
+            <div class="tip">
                 <b>Tip</b>
                 <p><b>City name + street address </b></p>
-                <p class=tip_s style="font-size:0.9em;">ex) 中国广东省佛山市南海区 / Willem Woutersstraat</p>
+                <p style="font-size:0.9em;">ex) 中国广东省佛山市南海区</p>
             </div>
             <div id="resultContainer">
 	            <ul id="results"></ul>
             </div>
-			<div id="map" style="width:calc(100% - 20px);height:300px;display:block;margin:0 auto;"></div>  
+			<div id="map"></div>  
         </div>
         <script type="text/javascript">
             //포커스 
             $(document).ready(function () {
                 $("#add_input").focus();
+                //****main_6.asp css 수정
+                $("#tr_zipwrap>td .a_close").css({
+                    "right": "-5px",
+                    "top": "-1px"
+                })
+                $(".material-symbols-outlined").css({
+                    "position": "relative",
+                    "margin-left": "49px",
+                    "margin-top": "3px",
+                    "z-index": 50
+                })
+
                 var loadMapsAPI = true;
-                //키변경
                 if (loadMapsAPI) {
                     var script = document.createElement('script');
                     script.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyC9j1_VWxunFKcuEBNClftVAk3bTgQD39A&libraries=places&callback=initMap";
@@ -104,8 +155,11 @@ set languageset=getsp_by_conn(getconnection(),sql)
                 }
             });
 
-             var lCode = "<%=lCode%>";              
-             var cName = "<%=cName%>";          
+            var lCode = "<%=lCode%>";              
+            var cName = "<%=cName%>";  
+            var noSearch = $("#noSearch").val();         
+            var nopostCode = $("#nopostCode").val();         
+
             $("#add_input").keypress(function (event) {
                 if (event.which == 13) {
                     event.preventDefault();
@@ -114,7 +168,7 @@ set languageset=getsp_by_conn(getconnection(),sql)
             })
 
             //*************************************************
-            //map, infowindow, address 전역
+            //map, infowindow, address, placesService 전역
             //*************************************************
 
             var map;
@@ -127,13 +181,12 @@ set languageset=getsp_by_conn(getconnection(),sql)
         
             //****맵 초기화        
             function initMap(cName) {
-                //안들어 와서 지역변수로 꽂아버렸음
                 cName="<%=cName%>"; 
                 var defaultLatLng = new google.maps.LatLng(0, 0);
                 infowindow = new google.maps.InfoWindow();
                 map = new google.maps.Map(document.getElementById("map"), {
                     center: defaultLatLng,
-                    zoom: 6,
+                    zoom: 7,
                     streetViewControl: false,
                     mapTypeControl: false,
                     fullscreenControl:false,
@@ -157,6 +210,9 @@ set languageset=getsp_by_conn(getconnection(),sql)
                 mySubmit(e)
             });
             
+
+
+
             //********마커 함수
             function addMarker(location) {
                 var marker = new google.maps.Marker({
@@ -169,36 +225,63 @@ set languageset=getsp_by_conn(getconnection(),sql)
 
             //**********리스트 클릭 함수(홍콩부분 다시 세팅 )
            function liClick(place, postal_code, setAdd) {
-                addInput.val(setAdd).focus();
+                //확인
+                //addInput.val(setAdd).focus(); 
                 var en_address = place.formatted_address;
                 // addInput.val(place.formatted_address).focus();
+                //*****우편번호 X
                 if (!postal_code || !place.formatted_address) {
-                    alert("우편번호를 찾을 수 없습니다. 상세한 주소한 주소와 우편번호를 입력해주세요.");
-                    $("#div_zipwrap").slideDown();
-                    $("#add_input").val("");
-                    $("#add_input").focus();
-                    $("#recv_addr2").val("");
+                    alert(nopostCode);
+                    $("#div_zipwrap").slideToggle();
+                    $("#recv_zip").focus();
+                    $("#recv_addr2").val(setAdd);
                     $("#recv_zip").val("");
-                    if (lCode === "zh_cn") {  
-                        $("#recv_addr1").val(addInput.val());
+
+                    if (lCode === "zh_cn") {                          
+                        $("#recv_addr1").val($("#add_input").val(setAdd));
+                        $("#recv_addr2").val(setAdd);
                         $("#recv_zip").val("");
                     }
                     $("#recv_zip").focus();
                 } else {
                     $("#recv_zip").val(postal_code);
                      $("#recv_addr2").val(setAdd);
+
                     // $("#recv_addr2").val(en_address);
                     if (lCode === "zh_cn") {  
-                        $("#recv_addr1").val(en_address); 
+                        $("#recv_addr2").val(en_address); 
+                        $("#recv_addr1").val(setAdd); 
                     }
                     $("#div_zipwrap").slideToggle();
                 }
             }
 
+            //*********getDetail 비동기 함수
+             function getPlaceDetails(placeId) {
+                var deferred = $.Deferred();
+
+                placesService.getDetails({ placeId: placeId, language: "en" }, function(place, status) {
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                        deferred.resolve(place);
+                    } else {
+                        deferred.reject(status);
+                    }
+                });
+
+                return deferred.promise();
+            }
+
+
             //*******서치이벤트
             function mySubmit() {
+                var inputValue = $("#add_input").val().trim();
+                var isWhitespace = /\s{3,}/.test(inputValue);
                 var lCode = $("#lCode").val();
                 var zipcodeInput = $("#zipcode");
+                // if (inputValue === "" || isWhitespace) {
+                //     alert("공백이나 띄어쓰기 3글자 이상은 검색할 수 없습니다.");
+                //     return; 
+                // }
                 address = `${addInput.val()} ${$("#hidden_country").val()}`;
                 const autocompl = new google.maps.places.AutocompleteService();
 
@@ -208,15 +291,17 @@ set languageset=getsp_by_conn(getconnection(),sql)
                     function (predictions, status) {
                         if (status != google.maps.places.PlacesServiceStatus.OK) {
                             console.error("Error_code 확인: " + status);
-                            //*****상세주소 X, 사용자 직접 수정
+                            //*****상세주소 X, 사용자 직접 수정→ 상세 수정으로 이동
                             if (status == google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
                                 lCode = lCode.replace("/", "");
-                                alert("주소가 검색되지 않았습니다. 다시 검색해주세요")
-                                $("#add_input").focus();
+                                alert(noSearch)
                                 $("#add_input").val("");
-                                $("#recv_addr2").val("");  
+                                $("#recv_addr2").val("");                                 
+                                $("#div_zipwrap").slideToggle();
+                                $("#recv_zip").focus(); 
                                 if (lCode===zh_cn){  
                                     $("#recv_addr1").val(addInput.val());
+                                    
                                 }
                             }
                             else alert(status);
@@ -227,12 +312,11 @@ set languageset=getsp_by_conn(getconnection(),sql)
                         $("#results").html("");
                         predictions.forEach(function (predi) {
                             var li = $('<li class="add_li"></li>');
-                            placesService.getDetails(
-                                { placeId: predi.place_id, language: "en" },
-                                function (place, status) {
-                                     if (place.geometry && place.geometry.location) { 
-                                            addMarker(place.geometry.location); 
-                                        }
+                              getPlaceDetails(predi.place_id)
+                               .done(function(place) {
+                                    if (place.geometry && place.geometry.location) { 
+                                        addMarker(place.geometry.location); 
+                                    }
                                     var postal_code = "";
                                     for (let i = 0; i < place.address_components.length; i++) {
                                         if (place.address_components[i].types.includes("postal_code")) {
@@ -240,27 +324,29 @@ set languageset=getsp_by_conn(getconnection(),sql)
                                             break;
                                         }
                                     }
-
+                                    var en_add=
                                     // 문자열_Hong Kong 체크
                                     var isHkAdd = predi.description.includes('Hong Kong');
                                     //****** Chome-를 중간에 포함한 주소 및 우편번호 필터링
                                     var setAddress=predi.description.replace(/Chome−[\d\-]+/, '').replace(postal_code, '').trim();
                                     //******우편번호 없거나 정식주소 없을때
                                     if (!postal_code || !place.formatted_address || isHkAdd) {
-                                        // li.html('<p class="zipcode">' + predi.description + '</p>');
-                                         if (isHkAdd) {
-                                            console.log(isHkAdd);
-                                            postal_code = '070';
-                                        }
-                                        console.log(postal_code, "1");
-                                        console.log(place.formatted_address,"2");
-                                        console.log(setAddress,"3");
+                                         if (isHkAdd) postal_code = '070';
                                         li.html(`<p class="zipcode_res">${postal_code}</p><span class="address">${setAddress}</span>`);
                                         $("#results").append(li);
+                                        $("#resultContainer").show();
+										$(".tip").hide();
                                         li.on("click", function () {
                                            if (!flag) {
-                                            flag=true;   
-                                        }
+                                            flag=true;
+                                            console.log(1);
+                                            $("#recv_addr1").val(predi.description);
+                                            console.log(2);
+                                            $("#recv_addr2").val(setAddress);
+                                            console.log(3);
+                                            $("#recv_zip").val("");
+                                            
+                                            }
                                         });
                                     } else {
                                          li.html('<p class="zipcode_res">' + postal_code + '</p> ' +
@@ -283,11 +369,15 @@ set languageset=getsp_by_conn(getconnection(),sql)
                                             //버블링 차단
                                             event.stopPropagation()
                                     });
-
-                                });
-                        });
+                                })//done
+                                 .fail(function(errorStatus) { 
+                                    console.error("Error details: ", errorStatus);
+                                    
+                                    });
+                        })
                     })
-            }
+                }
+                        
             window.initMap = initMap;
         </script>
 </body>
@@ -298,6 +388,3 @@ languageset.Close
 set languageset=nothing
 	
 %>
-
-
-

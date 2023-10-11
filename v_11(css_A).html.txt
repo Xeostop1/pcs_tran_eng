@@ -58,14 +58,16 @@ set languageset=getsp_by_conn(getconnection(),sql)
     if cCode="HK" then initialZipCode="070"
     
     ' response.write "lCode: " &lCode&"<br>"
-     response.write "cCode: "&cCode&"<br>"
+    ' response.write "cCode: "&cCode&"<br>"
     ' response.write "cName: "&cName&"<br>"
 
 
         ' %>
+        <div class="bar" style="background-color:#ffb57f; width:100%; height:40px; z-index:1; position: absolute; top: 0px;"></div>
         <div id="wrap" >
-            <div style="float:left;width:100%;text-align:center;border-bottom:1px solid #000000;padding:0;">
-	            <input id="add_input" type="text" class="presubmit" submit="mySubmit" placeholder="<%=getLang("=국가코드 왜 안들어가죠?? cCode","80")%>" >
+            <div style="float:left;width:100%;text-align:center; padding:0;">
+	            <input style=""
+                id="add_input" type="text" class="presubmit" submit="mySubmit" placeholder="<%=getLang("=국가코드 왜 안들어가죠?? cCode","80")%>" >
 	            <div style="width:50px;float:right;">
 		            <a href="javascript:void(0);" onclick="mySubmit();" class="material-symbols-outlined w600">search</a>
 	            </div>
@@ -174,11 +176,11 @@ set languageset=getsp_by_conn(getconnection(),sql)
                 // addInput.val(place.formatted_address).focus();
                 if (!postal_code || !place.formatted_address) {
                     alert("우편번호를 찾을 수 없습니다. 상세한 주소한 주소와 우편번호를 입력해주세요.");
-                    $("#div_zipwrap").slideDown();
-                    $("#add_input").val("");
-                    $("#add_input").focus();
+                    $("#div_zipwrap").slideToggle();
+                    $("#recv_zip").focus();
                     $("#recv_addr2").val("");
                     $("#recv_zip").val("");
+
                     if (lCode === "zh_cn") {  
                         $("#recv_addr1").val(addInput.val());
                         $("#recv_zip").val("");
@@ -194,6 +196,22 @@ set languageset=getsp_by_conn(getconnection(),sql)
                     $("#div_zipwrap").slideToggle();
                 }
             }
+
+            //*********getDetail 비동기 함수
+             function getPlaceDetails(placeId) {
+                var deferred = $.Deferred();
+
+                placesService.getDetails({ placeId: placeId, language: "en" }, function(place, status) {
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                        deferred.resolve(place);
+                    } else {
+                        deferred.reject(status);
+                    }
+                });
+
+                return deferred.promise();
+            }
+
 
             //*******서치이벤트
             function mySubmit() {
@@ -227,12 +245,11 @@ set languageset=getsp_by_conn(getconnection(),sql)
                         $("#results").html("");
                         predictions.forEach(function (predi) {
                             var li = $('<li class="add_li"></li>');
-                            placesService.getDetails(
-                                { placeId: predi.place_id, language: "en" },
-                                function (place, status) {
-                                     if (place.geometry && place.geometry.location) { 
-                                            addMarker(place.geometry.location); 
-                                        }
+                              getPlaceDetails(predi.place_id)
+                               .done(function(place) {
+                                    if (place.geometry && place.geometry.location) { 
+                                        addMarker(place.geometry.location); 
+                                    }
                                     var postal_code = "";
                                     for (let i = 0; i < place.address_components.length; i++) {
                                         if (place.address_components[i].types.includes("postal_code")) {
@@ -240,7 +257,6 @@ set languageset=getsp_by_conn(getconnection(),sql)
                                             break;
                                         }
                                     }
-
                                     // 문자열_Hong Kong 체크
                                     var isHkAdd = predi.description.includes('Hong Kong');
                                     //****** Chome-를 중간에 포함한 주소 및 우편번호 필터링
@@ -248,19 +264,15 @@ set languageset=getsp_by_conn(getconnection(),sql)
                                     //******우편번호 없거나 정식주소 없을때
                                     if (!postal_code || !place.formatted_address || isHkAdd) {
                                         // li.html('<p class="zipcode">' + predi.description + '</p>');
-                                         if (isHkAdd) {
-                                            console.log(isHkAdd);
-                                            postal_code = '070';
-                                        }
-                                        console.log(postal_code, "1");
-                                        console.log(place.formatted_address,"2");
-                                        console.log(setAddress,"3");
+                                         if (isHkAdd) postal_code = '070';
                                         li.html(`<p class="zipcode_res">${postal_code}</p><span class="address">${setAddress}</span>`);
                                         $("#results").append(li);
+                                        $("#resultContainer").show();
+										$(".tip").hide();
                                         li.on("click", function () {
                                            if (!flag) {
                                             flag=true;   
-                                        }
+                                            }
                                         });
                                     } else {
                                          li.html('<p class="zipcode_res">' + postal_code + '</p> ' +
@@ -283,11 +295,15 @@ set languageset=getsp_by_conn(getconnection(),sql)
                                             //버블링 차단
                                             event.stopPropagation()
                                     });
-
-                                });
-                        });
+                                })//done
+                                 .fail(function(errorStatus) { 
+                                    console.error("Error details: ", errorStatus);
+                                    
+                                    });
+                        })
                     })
-            }
+                }
+                        
             window.initMap = initMap;
         </script>
 </body>
@@ -298,6 +314,3 @@ languageset.Close
 set languageset=nothing
 	
 %>
-
-
-
