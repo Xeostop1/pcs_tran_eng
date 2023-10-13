@@ -20,9 +20,6 @@ Big Rib Ribbed Satin
 Napping
 APPING
 
-후드
-フード
-
 후로킹
 Flocking
 
@@ -54,11 +51,13 @@ Tote BackPack
 
 
 로고
+logo
 标徽
 
 羊毛球帽
 
 트루블랙
+トゥルーブラック
 
 하찌
 RAGLAN KNIT 

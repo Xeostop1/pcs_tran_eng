@@ -1,0 +1,497 @@
+<!--#include virtual=/inc/vbutil.inc-->
+<%
+'-------request values
+dim emailVerified
+emailVerified=false
+session("welcome_id")=request("welcome_id")
+if session("welcome_id")="" then session("welcome_id")="0"
+Logout_reset=true '===if user log out at this file then it will not comback to this to prevent login repeatation.
+useronly("")
+addonscript=true
+seo_block=true
+
+sub additionalScript()
+	%>
+		<link href='/css/jquery-ui.css' rel='stylesheet' type='text/css'>
+		<script src="/jquery/jquery-ui.min.js"></script>
+		
+		<!--script src="https://spi.maps.daum.net/imap/map_js_init/postcode.v2.js"></script-->
+		<!--script src="https://d1p7wdleee1q2z.cloudfront.net/post/search.min.js"></script-->
+		<style>
+			.div_informations{
+				opacity: 0.7;
+				border:1px solid #aaaaaa;
+				padding:10px;
+				padding-left:35px;
+				border-radius: 10px;
+				width:100%;
+				max-width:300px;
+				background-color:#eeeeee;
+				background-image:url('/images/icon_informations.png');
+				background-size:20px;
+				background-position:center left 10px;
+				background-repeat: no-repeat
+				
+			}
+		</style>
+		<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+		<script>
+		$(document).ready(function(){
+			var country=$('#user_name').attr('country');
+			$("#recv_country").find('option[value='+country+']').prop('selected',true);
+		});
+		$(document).on('change','#recv_country',function(){
+			var country=$(this).val();
+			var country_num=$('#recv_country option:selected').attr('country_num');
+			if(country_num) $('#user_mp').prev().text(country_num);
+			if(country=='KR'){
+				ResetAddr();
+				$("#tr_zipcode,#a_searchzipapi,#recv_addr1, .hideonworld").show();
+				$("#recv_addr2").attr("placeholder",getlang(86));//우편번호검색 이용 안내placeholder
+				$("#recv_addr2").parent().prev().text(getlang(86));//우편번호검색 이용 안내placeholder
+				$("#recv_addr1,#recv_zip").attr("readonly", true);
+			}else{
+				ResetAddr();
+				$("#tr_zipcode,#a_searchzipapi,#recv_addr1,.hideonworld").hide();
+				$("#recv_addr2").attr("placeholder",getlang(83));//외국 선택시 도시/지역으로 placeholder 변경
+				$("#recv_addr2").parent().prev().text(getlang(83));//우편번호검색 이용 안내placeholder
+				$("#recv_addr1,#recv_zip").attr("readonly", false);
+			}
+			
+		});
+		function fnCheckPassword(){
+			var user_pass=$('#user_pass').val();
+			var user_pass2=$('#user_pass2').val();
+			var language_code;
+			if(user_pass.length < 8 )
+				language_code=47;
+			else
+				user_pass==user_pass2 ? language_code=0 : language_code=46;
+		if (language_code !=0)
+			$('#user_pass, #user_pass2').val('');
+		return language_code;		
+
+		}
+		function fnQuit(obj){
+			if(confirm($(obj).attr('message'))) 	$(location).attr('href','/user/user_quit.html');
+		}
+		function fnCheckDuplicate(name,user_email,user_tel,user_mp,user_id){
+				var data_old=$("#"+name+"").attr('init');
+				var check_flag=false;
+				if(name=='user_email'){
+					user_tel='';user_mp='';user_id='';
+					if(data_old!=user_email) check_flag=true;
+				}
+				else if(name=='user_mp'){
+					user_tel='';user_email='';user_id='';
+					if(data_old!=user_mp) check_flag=true;
+				}
+				if(check_flag){
+					$.ajax({
+					  url:'/user/dup_chk.html',
+					  data:{
+					  	'user_email':user_email,
+					  	'user_tel':user_tel,
+					  	'user_mp':user_mp,
+					  	'user_id':user_id
+					  },
+					  type:'POST',
+					  success: function(data) {
+							switch(data){
+							case ('Y'): //중복있음
+									var alert_str=$("#"+name+"").attr('dupMessage');
+									$("#"+name+"").val($("#"+name+"").attr('init'));
+									alert(alert_str);
+								break;
+							case ('N'): //중복 없음
+									//alert('사용가능');
+								break;
+							}
+					  },
+					  error:function(response, textStatus, errorThrown){
+					  	$("#"+name+"").val('');
+					  }
+					 });  		
+				}
+		}
+		
+		function ResetAddr(){
+			$("#recv_zip").val('')	;
+			$("#recv_addr1").val('');
+			$("#recv_addr2").val('')	;
+		}
+		
+		$("#zip_gubun").change(function(){
+			$("#zip_addr").children('option').remove();
+			$("#zip_addr").hide();
+			$("#zip_search").val('');
+			$("#recv_zip").val('')	;	
+			$("#recv_addr1").val('');	
+		});
+							 
+		$("#zip_addr").change(function(){
+			var recv_zip=$("#zip_addr option:selected").val();
+			var recv_addr1=$("#zip_addr option:selected").attr('recv_addr1');
+			$("#recv_zip").val(recv_zip)	;	
+			$("#recv_addr1").val(recv_addr1);	
+		});
+		
+		$(function() {
+
+		$("#user_email").blur(function(){
+			if ($("#user_email").val() !=$("#user_email").attr("init")){
+				if ( !ValidateEmail($("#user_email").val())){
+					alert(getlang(45));//이메일 형식 경고메세지
+					$("#user_email").val($("#user_email").attr("init"));
+				}
+				else
+					fnCheckDuplicate($(this).attr('name'),$("#user_email").val(),$("#user_tel").val(),$("#user_mp").val(),$("#user_id").val());
+			}
+		});
+
+	    $("#user_tel,#user_mp,#user_id").blur(function(){
+			fnCheckDuplicate($(this).attr('name'),$("#user_email").val(),$("#user_tel").val(),$("#user_mp").val(),$("#user_id").val());
+		});
+		$("#user_pass2").blur(function(){
+			var result=fnCheckPassword();
+			result==0 ? void(0) : alert(getlang(result));
+		});
+	  });
+	  function saveEmail(){
+		  $("#form_userinfo #verifyStatus").val('verify');
+		  fnSaveInfo();
+	  }
+	  function fnSaveInfo(){
+		  if($("#user_pass").val() !='' &&  $("#user_pass").val().length < 8 ){
+			  	allert(getlang(47));//이메일 글자수 알림메시지
+			}
+		  	else if($("#user_pass").val()!=$("#user_pass2").val()){
+				$("#user_pass,#user_pass2").val('');
+				allert(getlang(46));//비밀번호/확인 불일치 메세지
+			}
+			else{
+				if(fnPreSubmit($("#form_userinfo"))){
+					JQMLOADER(true);
+					$("#form_userinfo").submit();			
+				}
+			}
+	  }
+	  $(document).on('click','#a_submit',function(){fnSaveInfo();});
+	  
+	  	$(document).ready(function(){
+			 $( "#birth_yyyymmdd" ).datepicker({
+			      changeMonth: true,
+			      changeYear: true,
+			      yearRange: "-100:-0",
+			      monthNames: ["1","2","3","4","5","6","7","8","9","10","11","12"],
+				  monthNamesShort: ["1","2","3","4","5","6","7","8","9","10","11","12"],
+			      //defaultDate: new Date(2000,3),
+			      showMonthAfterYear : true,
+			      dateFormat:'yy/mm/dd'
+			    });
+			    $(".ui-datepicker-month").insertAfter(".ui-datepicker-year");
+			    $('li.buy_id').each(function(){
+						var buy_id=$(this).attr('buy_id');
+						var pcs_count=$('li.buy_id[buy_id='+buy_id+']').length;
+						$('li.buy_id[buy_id='+buy_id+']').not(':first').html('');
+						/*주문번호별 구분하기*/
+						if (!$('li.buy_id[buy_id='+buy_id+']').parent().parent().hasClass('ordercontainer'))
+							$('li.buy_id[buy_id='+buy_id+']').parent().wrapAll('<div class="ordercontainer"></div>')
+				})
+		});
+	</script>
+	<%
+end sub	
+
+sub mainform()	
+	%>
+	<form id="form_userinfo" method="post" action="personal_save.html">
+		<input type="hidden" name="verifyStatus" id="verifyStatus">
+		<%
+		SQL="USP_USER_10_01 '"&SESSION("USER_ID")&"'"
+		set rs=getsp_by_conn(getconnection(),sql)
+		if not(rs.eof or rs.bof) then
+			country=rs("country")
+			'if country="" then country="KR"
+			if rs("USER_EMAIL")<>"" and rs("USER_EMAIL")=rs("email_verified") then emailVerified=true '인증된 이메일이면
+			%>
+			<table class="table_form">
+				<tr>
+					<th><%=getlang("이름",35)%></th>
+					<td>
+						<input 
+							type="text" 
+							id="user_name" 
+							name="user_name" 
+							init="<%=rs("user_name")%>" 
+							value="<%=rs("user_name")%>" 
+							class="mustinput "
+							country="<%=country%>"
+							title="<%=getlang("이름을 입력하세요",36)%>"
+						>
+					</td>
+				</tr>
+				<tr <%if rs("fb_yn")="Y" then response.write " class=""hidethis"" "%>>
+					<th>ID</th>
+					<td><%=session("user_id")%> <!--<a href="a_"><%=getlang("회원탈퇴",166)%>--></a></td>
+				</tr>
+				<tr>
+					<th>
+						<%=getLang("지인코드",338)%>
+						<a class="material-icons" href="javascript:void(0);" onclick="ToggleTips('/inc/referralCode.html')">help</a>
+					</th>
+					<td class="td_grade">
+						<%
+							if rs("rec_code")<>"" then
+								response.write rs("rec_code")
+							else
+								response.write "<div class=""div_informations"">"&getLang("이메일인증권유",341)&"</div>"
+							end if	
+								
+						%>
+					</td>
+				</tr>
+				<tr>
+					<th><%=getlang("회원등급",153)%></th>
+					<td class="td_grade">
+						<%PringUserGrd(session("user_grd"))%>
+					</td>
+				</tr>
+				<%
+				if trim(rs("gender"))="" then	
+				%>
+				<tr>
+					<th><%=getlang("성별",154)%></th>
+					<td>
+						<%if trim(rs("gender")) = "" then%>
+							<select name="gender" id="gender">
+								<option value=""><%=getlang("성별",154)%></option>
+								<option value="M"><%=getlang("남자",155)%></option>
+								<option value="F"><%=getlang("여자",156)%></option>
+							</select>
+						<%else
+							if ucase(rs("gender"))="M" then response.write getlang("남자",155)
+							if ucase(rs("gender"))="F" then response.write getlang("여자",156)
+						end if%>
+					</td>
+				</tr>
+				<%
+				end if	
+				%>
+				<tr>
+					<th><%=getlang("생년월일",157)%></th>
+					<td>
+						<%if trim(rs("birth_yyyy")) = "" or trim(rs("birth_mm")) = "" or trim(rs("birth_dd")) = "" then %>
+							<input type="text" id="birth_yyyymmdd" name="birth_yyyymmdd" readonly>
+						<%else
+						%>
+							<%=rs("birth_yyyy")%> / <%=rs("birth_mm")%> / <%=rs("birth_dd")%>
+						<%end if%>
+						<%if trim(rs("gender"))<>"" then %>
+							<%if rs("gender_desc") <> "" then response.write " / "&rs("gender_desc")&" " %>
+						<%end if%>
+					</td>
+				</tr>
+				<tr>
+					<th><%=getlang("이메일",37)%></th>
+					<td>
+						<%if (emailVerified) then response.write "<input type=""text"" value="""&rs("email_verified")&""" disabled readonly style=""max-width:calc(100% - 60px);vertical-align:middle;"">"%>
+						<input 
+							type="<%
+								if (emailVerified) then 
+									response.write "hidden"
+								else
+									response.write "text"
+								end if	
+							%>" 
+							id="user_email" 
+							name="user_email" 
+							value="<%=rs("user_email")%>" 
+							init="<%=rs("user_email")%>"
+							title="<%=getlang("이메일중복 메시지",43)%>"
+							dupMessage="<%=getlang("이메일 중복메세지",43)%>"
+							wrongMessage="<%=getlang("이메일 오류메세지",45)%>"
+						>
+						<%if rs("user_email")<>"" then%>
+							<%
+							if emailVerified then 
+									response.write "<a href=""/personal/verifyEmail.html?verifyCondition=reVerify"" class=""btn2 tiny"">"
+									response.write "<span class=""material-icons"">edit</span> "
+									response.write "</a>"
+								else
+									response.write "<a href=""javascript:void(0);"" onclick=""saveEmail();"" class=""btn2 tiny"">"
+									response.write "<span class=""material-icons"">email</span> "
+									response.write getLang("이메일인증",328)
+									response.write "</a>"
+								end if	
+						%></a>
+						<%end if%>
+						
+					</td>
+				</tr>
+				
+				<tr <%if rs("fb_yn")="Y" then response.write " class=""hidethis"" "%>>
+					<th><%=getlang("비밀번호 변경",158)%></th>
+					<td>
+						<input 
+							type="password" 
+							id="user_pass" 
+							name="user_pass" 
+							placeholder="<%=getlang("변경할 비밀번호",159)%>"
+						>
+						<input 
+							type="password" 
+							id="user_pass2" 
+							name="user_pass2" 
+							placeholder="<%=getlang("변경할 비밀번호 확인",160)%>"
+						>
+						<p><%=getlang("비밀번호를 변경할 경우에만 입력",161)%></p>
+					</td>
+				</tr>	
+				<tr>
+					<th><%=getlang("휴대전화",71)%></th>
+					<td>
+						(<span><%=rs("country_num")%></span>)
+						<input 
+							class="onlynum" 
+							type="text" 
+							id="user_mp" 
+							name="user_mp" 
+							value="<%=rs("user_mp")%>" 
+							init="<%=rs("user_mp")%>" 
+							title="<%=getlang("전화번호 중복안내메세지",162)%>"
+							dupMessage="<%=getlang("번호 중복메세지",162)%>"
+						>
+					</td>
+				</tr>	
+				<tr>
+					<th><%=getlang("국가",163)%></th>
+					<%
+					korea=true	
+					country_must=true
+					%>
+					<td><!--#include virtual=/inc/recv_country.inc--></td>
+				</tr>
+				<tr>
+					<th><%=getlang("우편번호",80)%></th>
+					<td>
+						<input 
+							class="postcodify_postcode5"
+							id="recv_zip"  
+							type=text 
+							name="recv_zip" 
+							maxlength=7 <%if rs("country") = "KR" or rs("country") = ""  then response.write " readonly " %> 
+							value="<%=trim(rs("user_zip"))%>" 
+							placeholder="<%=getlang("우편번호",80)%>"
+						>
+						
+						<select id="zip_addr" zip_target="recv_zip" addr_target="recv_addr1" class="hidethis"></select>
+						<a 
+							id="a_searchzipapi" 
+							class="btn2 <%if rs("country") <> "KR" and rs("country") <> ""  then response.write " hidethis " %>"
+							href="javascript:void(0);"
+							onclick="OpenZipSearch(false)"
+						>
+						<!--onclick="OpenZipSearch(false)"---->	
+						<span class="material-icons">search</span>
+						<%=getlang("우편번호 검색",82)%></a>
+						<script>//$(function() { $("#a_searchzipapi").postcodifyPopUp(); }); </script>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2" class="td_blank" style="position:relative;">
+						<div id="div_zipwrap">
+							<a class="a_close forwhitebg"></a>
+						</div>
+					</td>
+				</tr>
+				<tr class="hideonworld <%if rs("country") <> "KR" and rs("country") <> ""  then response.write " hidethis " %>">
+					<th><%=getlang("주소",84)%></th>
+					<td>
+							<input 
+								id="recv_addr1"  
+								type="text" 
+								name="recv_addr1" 
+								readonly   
+								class="full postcodify_address" 
+								value="<%=rs("user_addr1")%>" 
+								placeholder="<%=getlang("주소",84)%>">
+					</td>
+				</tr>
+				<tr>
+					<th><%
+						if rs("country") <> "KR" and rs("country") <> ""  then
+										response.write getlang("주소",83)
+									else
+										response.write  getlang("상세주소",86)
+									end if
+					%></th>
+					<td>
+							<input  
+								id="recv_addr2" 
+								type="text"
+								name="recv_addr2" 
+								class="full postcodify_extra_info" 
+								value="<%=rs("user_addr")%>" 
+								placeholder="<%
+									if rs("country") <> "KR" and rs("country") <> ""  then
+										response.write getlang("주소",83)
+									else
+										response.write  getlang("상세주소",86)
+									end if
+								%>"
+							>
+					</td>
+				</tr>
+				<tr>
+					<th></th>
+					<td>
+						<label class="check-container">
+							<input type="checkbox" id="user_mailyn" name="user_mailyn" value="Y" <%if rs("user_mailyn")="Y" then response.write " checked " %>>
+							<span class="checkmark"></span>
+							<%=getlang("수신동의",41)%>
+						</label>
+												<label class="check-container">
+							<input type="checkbox" id="user_smsyn" name="user_smsyn" value="Y"  <%if rs("user_smsyn")="Y" then response.write " checked " %>>
+							<span class="checkmark"></span>
+							<%=getlang("SMS 수신동의",165)%> 
+						</label>
+
+					</td>
+				</tr>
+			</table>
+			
+			<ul class="ul_togglefooter nohide">
+				<li><a href="javascript:void(0);" onclick="history.back();" class="icon back showonmobile"></a></li>
+				<li><a id="a_submit" href="javascript:void(0);">
+					<span class="material-icons">save</span>
+					<%=getlang("정보저장",167)%>
+				</a></li>
+				<li><a href="javascript:void(0);" onclick="fnQuit($(this))" class="a_reverse" message="<%=getlang("탈퇴안내메세지",150)%>">
+					<span class="material-icons">person_remove</span>
+					<%=getlang("회원탈퇴",166)%>
+				</a></li>
+			</ul>
+
+		<%
+		end if	
+		%>
+	</form>
+	<%
+end sub	
+	%>
+<!--#include virtual=/inc/top.inc-->
+<div id="div_leftmenucontainer">
+	<%call mypagemenu()%>
+</div>
+<div id="div_narrowcontainer" class="has_leftmenu togglepadding">
+	<p class="page_title material">
+		<span class="material-symbols-outlined s30 fill">settings</span>
+		<span><%=getlang("개인정보관리",168)%></span>
+	</p>
+	<%call mainform()%>
+</div>
+<%
+channel_tf=false	
+%>
+<!--#include virtual=/inc/bottom.inc-->
